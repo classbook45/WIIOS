@@ -1,0 +1,78 @@
+name: Dolphin iOS Core
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_core:
+        description: "Build the iOS device XCFramework (first build can take 30–60+ minutes)"
+        required: true
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - "scripts/bootstrap-dolphin-ios.sh"
+      - "Core/DolphinBridge/**"
+      - ".github/workflows/dolphin-ios-core.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dolphin-ios-core-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-check:
+    name: Fetch and validate iOS Dolphin source
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout WIIOS
+        uses: actions/checkout@v4
+
+      - name: Install core build prerequisites
+        run: brew install cmake ninja tuist bartycrouch
+
+      - name: Bootstrap iOS Dolphin source
+        run: bash scripts/bootstrap-dolphin-ios.sh
+
+      - name: Report resolved upstream revision
+        run: |
+          echo "Resolved iCube revision:"
+          cat .build/dolphin-ios-revision.txt
+
+      - name: Upload source revision record
+        uses: actions/upload-artifact@v4
+        with:
+          name: dolphin-ios-source-revision
+          path: .build/dolphin-ios-revision.txt
+          if-no-files-found: error
+
+  build-core:
+    name: Build Dolphin iOS device core
+    needs: source-check
+    if: github.event_name == 'workflow_dispatch' && inputs.build_core
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - name: Checkout WIIOS
+        uses: actions/checkout@v4
+
+      - name: Install core build prerequisites
+        run: brew install cmake ninja tuist bartycrouch
+
+      - name: Bootstrap iOS Dolphin source
+        run: bash scripts/bootstrap-dolphin-ios.sh
+
+      - name: Build iOS device XCFramework
+        working-directory: .build/dolphin-ios
+        run: python3 BuildiOSXCFramework.py
+
+      - name: Upload Dolphin core XCFramework
+        uses: actions/upload-artifact@v4
+        with:
+          name: PVlibDolphin-ios-device
+          path: .build/dolphin-ios/build/xcframework/PVlibDolphin.xcframework
+          if-no-files-found: error
+          retention-days: 7
