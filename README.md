@@ -27,7 +27,7 @@ Requirements: Xcode 16 or later; iOS 17.0 deployment target.
 
 ## Dolphin core
 
-The emulator core is intentionally not vendored in this initial scaffold. Core integration requires an iOS-specific compatibility assessment, a reproducible build configuration, and compliance with Dolphin's GPL-2.0-or-later licensing and notices.
+The selected iOS core candidate is [iCube](https://github.com/Provenance-Emu/iCube), an open-source iOS/iPadOS/tvOS Dolphin fork with a documented XCFramework build path. WIIOS checks it out into the ignored `.build/dolphin-ios` directory rather than copying its large source tree into this repository. See [Core Integration](Core/DolphinBridge/CORE_INTEGRATION.md). Run `bash scripts/bootstrap-dolphin-ios.sh` on macOS to fetch the source and its submodules. The `Dolphin iOS Core` GitHub Actions workflow validates the checkout; its manual `build_core` option can build the iOS device XCFramework. The core is not yet linked to WIIOS, and the upstream `develop` branch is currently tracked pending review and commit pinning. Dolphin/iCube core code is GPL-2.0-or-later; WIIOS's MIT license applies only to WIIOS-authored frontend code.
 
 ## License
 
